@@ -1,0 +1,197 @@
+﻿<Window x:Class="WpfApp1.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:WpfApp1"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="800" Width="1500">
+    
+        <Window.Resources>
+            <local:ItemViewModelDataTemplateSelector x:Key="ItemViewModelTemplateSelector"/>
+
+            <DataTemplate x:Key="GrayscaleCommandTemplate" DataType="{x:Type local:GrayscaleCommand}">
+                <StackPanel>
+                    <CheckBox Content="{Binding Name}" FontWeight="Bold" IsChecked="{Binding Enabled}" Height="30" VerticalContentAlignment="Center"/>
+                </StackPanel>
+            </DataTemplate>
+
+            <DataTemplate x:Key="GaussianBlurCommandTemplate" DataType="{x:Type local:GaussianBlurCommand}">
+                <StackPanel>
+                    <CheckBox Content="{Binding Name}" FontWeight="Bold" IsChecked="{Binding Enabled}" Height="30" VerticalContentAlignment="Center"/>
+                    <DockPanel IsEnabled="{Binding Enabled}">
+                        <Label DockPanel.Dock="Left" Content="ぼかしサイズ"  Width="150"/>
+                        <TextBox DockPanel.Dock="Right" Text="{Binding Size}" Height="30" Width="50"/>
+                        <Slider Value="{Binding Size}" Minimum="1" Maximum="255" IsSnapToTickEnabled="True" TickFrequency="2" Height="30"/>
+                    </DockPanel>
+                </StackPanel>
+            </DataTemplate>
+
+            <!-- MedianBlurCommand -->
+            <DataTemplate x:Key="MedianBlurCommandTemplate" DataType="{x:Type local:MedianBlurCommand}">
+                <StackPanel>
+                    <CheckBox Content="{Binding Name}" FontWeight="Bold" IsChecked="{Binding Enabled}" Height="30" VerticalContentAlignment="Center"/>
+                    <DockPanel IsEnabled="{Binding Enabled}">
+                        <Label DockPanel.Dock="Left" Content="ぼかしサイズ"  Width="150"/>
+                        <TextBox DockPanel.Dock="Right" Text="{Binding Size}" Height="30" Width="50"/>
+                        <Slider Value="{Binding Size}" Minimum="1" Maximum="255" IsSnapToTickEnabled="True" TickFrequency="2" Height="30"/>
+                    </DockPanel>
+                </StackPanel>
+            </DataTemplate>
+
+            <!-- BilateralFilterCommand -->
+            <DataTemplate x:Key="BilateralFilterCommandTemplate" DataType="{x:Type local:BilateralFilterCommand}">
+                <StackPanel>
+                    <CheckBox Content="バイラテラルフィルタ" FontWeight="Bold" IsChecked="{Binding Enabled}" Height="30" VerticalContentAlignment="Center"/>
+                    <DockPanel IsEnabled="{Binding Enabled}">
+                        <DockPanel DockPanel.Dock="Top">
+                            <Label DockPanel.Dock="Left" Content="フィルタサイズ" Width="150"/>
+                            <TextBox DockPanel.Dock="Right" Text="{Binding Size}" Height="30" Width="50"/>
+                            <Slider Value="{Binding Size}" Minimum="1" Maximum="255" IsSnapToTickEnabled="True" TickFrequency="2" Height="30"/>
+                        </DockPanel>
+                        <DockPanel DockPanel.Dock="Top">
+                            <Label DockPanel.Dock="Left" Content="標準偏差(色空間)" Width="150" />
+                            <TextBox DockPanel.Dock="Right" Text="{Binding SigmaColor}" Height="30" Width="50"/>
+                            <Slider Value="{Binding SigmaColor}" Minimum="1" Maximum="255" IsSnapToTickEnabled="True" TickFrequency="2" Height="30"/>
+                        </DockPanel>
+                        <DockPanel DockPanel.Dock="Top">
+                            <Label DockPanel.Dock="Left" Content="標準偏差(座標空間)" Width="150" />
+                            <TextBox DockPanel.Dock="Right" Text="{Binding SigmaSpace}" Height="30" Width="50"/>
+                            <Slider Value="{Binding SigmaSpace}" Minimum="1" Maximum="255" IsSnapToTickEnabled="True" TickFrequency="2" Height="30"/>
+                        </DockPanel>
+                    </DockPanel>
+                </StackPanel>
+            </DataTemplate>
+
+            <!-- ThresholdCommand -->
+            <DataTemplate x:Key="ThresholdCommandTemplate" DataType="{x:Type local:ThresholdCommand}">
+                <StackPanel>
+                    <CheckBox Content="{Binding Name}" FontWeight="Bold" IsChecked="{Binding Enabled}" Height="30" VerticalContentAlignment="Center"/>
+                    <DockPanel IsEnabled="{Binding Enabled}">
+                        <Label DockPanel.Dock="Left" Content="閾値"  Width="150"/>
+                        <TextBox DockPanel.Dock="Right" Text="{Binding Threshold}" Height="30" Width="50"/>
+                        <Slider Value="{Binding Threshold}" Minimum="0" Maximum="255" IsSnapToTickEnabled="True" TickFrequency="1" Height="30"/>
+                    </DockPanel>
+                </StackPanel>
+            </DataTemplate>
+
+            <!-- MorphologyExCommand -->
+            <DataTemplate x:Key="MorphologyExCommandTemplate" DataType="{x:Type local:MorphologyExCommand}">
+                <StackPanel>
+                    <CheckBox Content="{Binding Name}" FontWeight="Bold" IsChecked="{Binding Enabled}" Height="30" VerticalContentAlignment="Center"/>
+                    <DockPanel IsEnabled="{Binding Enabled}">
+                        <DockPanel DockPanel.Dock="Top">
+                            <Label DockPanel.Dock="Left" Content="サイズ"  Width="150"/>
+                            <TextBox DockPanel.Dock="Right" Text="{Binding Size}" Height="30" Width="50"/>
+                            <Slider Value="{Binding Size}" Minimum="1" Maximum="255" IsSnapToTickEnabled="True" TickFrequency="2" Height="30"/>
+                        </DockPanel>
+
+                        <DockPanel DockPanel.Dock="Top">
+                            <Label DockPanel.Dock="Left" Content="タイプ"  Width="150"/>
+                            <ComboBox ItemsSource="{Binding Types}" SelectedIndex="{Binding SelectedIndex}" />
+                        </DockPanel>
+                    </DockPanel>
+                </StackPanel>
+            </DataTemplate>
+
+            <!-- ScaleAbsCommand -->
+            <DataTemplate x:Key="ScaleAbsCommandTemplate" DataType="{x:Type local:ScaleAbsCommand}">
+                <StackPanel>
+                    <DockPanel DockPanel.Dock="Top">
+                        <Label DockPanel.Dock="Left" Content="コントラスト" FontWeight="Bold" Width="150"/>
+                        <TextBox DockPanel.Dock="Right" Text="{Binding Alpha}" Height="30" Width="50"/>
+                        <Slider Value="{Binding Alpha}" Minimum="0" Maximum="21" IsSnapToTickEnabled="True" TickFrequency="0.01" Height="30"/>
+                    </DockPanel>
+                    <DockPanel DockPanel.Dock="Top">
+                        <Label DockPanel.Dock="Left" Content="明るさ" FontWeight="Bold" Width="150"/>
+                        <TextBox DockPanel.Dock="Right" Text="{Binding Beta}" Height="30" Width="50"/>
+                        <Slider Value="{Binding Beta}" Minimum="-255" Maximum="255" IsSnapToTickEnabled="True" TickFrequency="0.01" Height="30"/>
+                    </DockPanel>
+                </StackPanel>
+            </DataTemplate>
+
+            <!-- BitwiseNotCommand -->
+            <DataTemplate x:Key="BitwiseNotCommandTemplate" DataType="{x:Type local:BitwiseNotCommand}">
+                <StackPanel>
+                    <CheckBox Content="{Binding Name}" FontWeight="Bold" IsChecked="{Binding Enabled}" Height="30" VerticalContentAlignment="Center"/>
+                </StackPanel>
+            </DataTemplate>
+
+            <!-- RotateCommand -->
+            <DataTemplate x:Key="RotateCommandTemplate" DataType="{x:Type local:RotateCommand}">
+                <StackPanel>
+                    <DockPanel DockPanel.Dock="Top">
+                        <Label DockPanel.Dock="Left" Content="{Binding Name}" FontWeight="Bold" Width="150"/>
+                        <TextBox DockPanel.Dock="Right" Text="{Binding Angle}" Height="30" Width="50"/>
+                        <Slider Value="{Binding Angle}" Minimum="-180" Maximum="180" IsSnapToTickEnabled="True" TickFrequency="1" Height="30"/>
+                    </DockPanel>
+                </StackPanel>
+
+            </DataTemplate>
+
+        </Window.Resources>
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="300" />
+            </Grid.ColumnDefinitions>
+            <DockPanel Grid.Column="0" Margin="10 10 0 0">
+                <DockPanel DockPanel.Dock="Top" Height="30" Margin="0 0 0 5">
+                    <Button Content="..." Command="{Binding VideoFileOpenCommand}" DockPanel.Dock="Right" Width="50"/>
+                    <Label DockPanel.Dock="Left" Content="動画ファイル" FontWeight="Bold" Width="100"/>
+                    <TextBox Text="{Binding VideoFilename}" />
+                </DockPanel>
+                <DockPanel DockPanel.Dock="Top" Height="30" Margin="0 0 0 5">
+                    <Button Content="追加" Command="{Binding AddFilterCommand}" DockPanel.Dock="Right" Width="50"/>
+                    <Label DockPanel.Dock="Left" Content="フィルタ一覧" FontWeight="Bold" Width="100"/>
+                    <ComboBox ItemsSource="{Binding CommandTypes}" SelectedIndex="{Binding CommandTypeSelectedIndex}" />
+                </DockPanel>
+                <DockPanel DockPanel.Dock="Top" Height="30" Margin="0 0 0 5">
+                    <StackPanel Orientation="Horizontal">
+                        <Button Content="削除" Command="{Binding DeleteFilterCommand}" Width="50"/>
+                    </StackPanel>
+                </DockPanel>
+                <DockPanel DockPanel.Dock="Top" Height="30" Margin="0 0 0 5">
+                    <TextBlock Text="フレーム(ms)" Width="100" />
+                    <TextBlock Text="{Binding FrameTime}"/>
+                </DockPanel>
+                <DockPanel DockPanel.Dock="Top" Height="30" Margin="0 0 0 5">
+                    <DockPanel>
+                        <TextBlock Text="認識文字" Width="100" />
+                        <TextBox Text="{Binding RecognizedText}"/>
+                    </DockPanel>
+                </DockPanel>
+                <Grid Width="30" DockPanel.Dock="Right">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <Button Content="▲" Grid.Row="0" Command="{Binding UpFilterCommand}"/>
+                    <Button Content="▼" Grid.Row="1" Command="{Binding DownFilterCommand}"/>
+                </Grid>
+                <ListBox Name="myListBox" ItemsSource="{Binding Filters}" ItemTemplateSelector="{StaticResource ItemViewModelTemplateSelector}" SelectedIndex="{Binding FilterSelectedIndex}">
+                    <ListBox.ItemContainerStyle>
+                        <Style TargetType="ListBoxItem">
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                            <EventSetter Event="GotFocus" Handler="ListBoxItem_GotFocus" />
+                        </Style>
+                    </ListBox.ItemContainerStyle>
+                </ListBox>
+            </DockPanel>
+
+            <Image Grid.Column="1" x:Name="img" Source="{Binding Source}" MouseLeftButtonDown="img_MouseDown" MouseMove="img_MouseMove" MouseLeftButtonUp="img_MouseUp"
+               />
+            <Canvas Grid.Column="1" Name="canvas1"  Width="{Binding Path=ActualWidth, ElementName=img}" Height="{Binding Path=ActualHeight, ElementName=img}">
+                <Rectangle Name="rectangle" MouseLeftButtonUp="img_MouseUp"
+                       Canvas.Left="{Binding Region.Left, Mode=TwoWay}" Canvas.Top="{Binding Region.Top, Mode=TwoWay}"
+                       Width="{Binding Region.Width, Mode=TwoWay}" Height="{Binding Region.Height, Mode=TwoWay}"
+                       >
+                </Rectangle>
+            </Canvas>
+
+            <Image Grid.Column="2" Source="{Binding TrimedSource}" />
+
+        </Grid>
+    </Window>
