@@ -361,3 +361,6 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+/NumericRecognizer/images/IMG_9134
+/NumericRecognizer/compare.exe
+/NumericRecognizer/out.txt

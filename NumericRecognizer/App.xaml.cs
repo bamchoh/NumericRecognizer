@@ -2,9 +2,9 @@
 using System.Configuration;
 using System.Data;
 using System.Windows;
-using WpfApp1;
+using NumericRecognizer;
 
-namespace WpfApp1
+namespace NumericRecognizer
 {
     /// <summary>
     /// Interaction logic for App.xaml

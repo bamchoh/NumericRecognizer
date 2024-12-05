@@ -27,7 +27,7 @@ using System.ComponentModel;
 using Microsoft.Win32;
 using System.Runtime.CompilerServices;
 
-namespace WpfApp1
+namespace NumericRecognizer
 {
     public class FilterExecutor
     {
@@ -451,7 +451,9 @@ namespace WpfApp1
 
         public RotateCommand() : base("Rotate", "回転") { }
 
-        public RotateCommand(RotateCommand a) : base(a.Id, a.Name, a.Enabled) { }
+        public RotateCommand(RotateCommand a) : base(a.Id, a.Name, a.Enabled) {
+            Angle = a.Angle;
+        }
 
         public override CommandBase DeepCopy()
         {
@@ -571,13 +573,6 @@ namespace WpfApp1
                 DownFilterCommand.RaiseCanExecuteChanged();
                 DeleteFilterCommand?.RaiseCanExecuteChanged();
             }
-        }
-
-        private string _recognizedText = "";
-        public string RecognizedText
-        {
-            get { return _recognizedText; }
-            set { SetProperty(ref _recognizedText, value); }
         }
 
         private Rectangle _region = new Rectangle();
@@ -790,7 +785,7 @@ namespace WpfApp1
                         }
 
                         PosMsec = (int)capture.Get(VideoCaptureProperties.PosMsec);
-
+                        
                         Action<Mat> updateSource = (dst) =>
                         {
                             _bitmap = BitmapConverter.ToBitmap(dst);
@@ -799,30 +794,25 @@ namespace WpfApp1
                             if (_imgActualWidth <= 0 || _imgActualHeight <= 0
                              || _region.Width <=0 || _region.Height <= 0)
                             {
-                                _scaledRegion.Left = 0;
-                                _scaledRegion.Top = 0;
-                                _scaledRegion.Width = dst.Width;
-                                _scaledRegion.Height = dst.Height;
+                                return;
                             }
-                            else
+
+                            var scale = dst.Width / _imgActualWidth;
+
+                            if ((_region.Left + _region.Width) * scale > dst.Width)
                             {
-                                var scale = dst.Width / _imgActualWidth;
-
-                                if ((_region.Left + _region.Width) * scale > dst.Width)
-                                {
-                                    _region.Left = (dst.Width - _region.Width * scale) / scale;
-                                }
-
-                                if ((_region.Top + _region.Height) * scale > dst.Height)
-                                {
-                                    _region.Top = (dst.Height - _region.Height * scale) / scale;
-                                }
-
-                                _scaledRegion.Left = _region.Left * scale;
-                                _scaledRegion.Top = _region.Top * scale;
-                                _scaledRegion.Width = (int)((double)_region.Width * scale);
-                                _scaledRegion.Height = (int)((double)_region.Height * scale);
+                                _region.Left = (dst.Width - _region.Width * scale) / scale;
                             }
+
+                            if ((_region.Top + _region.Height) * scale > dst.Height)
+                            {
+                                _region.Top = (dst.Height - _region.Height * scale) / scale;
+                            }
+
+                            _scaledRegion.Left = _region.Left * scale;
+                            _scaledRegion.Top = _region.Top * scale;
+                            _scaledRegion.Width = (int)((double)_region.Width * scale);
+                            _scaledRegion.Height = (int)((double)_region.Height * scale);
 
                             using (var dst2 = dst.Clone(new OpenCvSharp.Rect((int)_scaledRegion.Left, (int)_scaledRegion.Top, _scaledRegion.Width, _scaledRegion.Height)))
                             {
@@ -833,12 +823,6 @@ namespace WpfApp1
                                     bmp4recog.Save(Path.Combine(outputdir, "img", string.Format("{0}.png", PosMsec.ToString("D8"))));
 
                                     bmp4recog.Save(ms, ImageFormat.Png);
-
-                                    var ocr = new WindowsOcr();
-
-                                    RecognizedText = ocr.Recognize(ms);
-
-                                    File.AppendAllText(Path.Combine(outputdir, string.Format("recognized.txt")), string.Format("{0}\t{1}\n", PosMsec.ToString("D8"), RecognizedText));
                                 }
 
                                 _trimedBitmap = BitmapConverter.ToBitmap(dst2);
