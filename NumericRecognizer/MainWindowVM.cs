@@ -1,37 +1,39 @@
-﻿using System;
+﻿using Microsoft.Win32;
+using OpenCvSharp.Extensions;
+using OpenCvSharp;
+using Prism.Commands;
+using Prism.Mvvm;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Drawing.Imaging;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 using System.Security.Policy;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
-using OpenCvSharp;
-using OpenCvSharp.Extensions;
-using System.Windows.Media;
-using System.Windows.Input;
-using System.Windows.Media.Imaging;
-using System.Windows;
+using System.Threading;
 using System.Windows.Controls;
-using System.Runtime.InteropServices;
-using System.Windows.Interop;
-using System.Security.Cryptography;
-using System.Windows.Media.Media3D;
 using System.Windows.Data;
-using Prism.Commands;
-using Prism.Mvvm;
-using System.Collections.ObjectModel;
-using System.ComponentModel;
-using Microsoft.Win32;
-using System.Runtime.CompilerServices;
+using System.Windows.Input;
+using System.Windows.Interop;
+using System.Windows.Media.Imaging;
+using System.Windows.Media.Media3D;
+using System.Windows.Media;
+using System.Windows;
+using System;
+using OpenCvSharp.WpfExtensions;
+
 
 namespace NumericRecognizer
 {
     public class FilterExecutor
     {
-        public static void Execute(Queue<CommandBase> commands, Mat src, Action<Mat> act)
+        public static void Execute(Queue<CommandBase> commands, UMat src, Action<UMat> act)
         {
             if(commands.Count == 0)
             {
@@ -40,7 +42,7 @@ namespace NumericRecognizer
             }
 
             var cmd = commands.Dequeue();
-            using (var dst = new Mat())
+            using (var dst = new UMat())
             {
                 cmd.Execute(src, dst);
 
@@ -76,7 +78,7 @@ namespace NumericRecognizer
 
         public abstract CommandBase DeepCopy();
 
-        public abstract void Execute(Mat src, Mat dst);
+        public abstract void Execute(UMat src, UMat dst);
     }
 
     public class GaussianBlurCommand : CommandBase
@@ -110,7 +112,7 @@ namespace NumericRecognizer
             return new GaussianBlurCommand(this);
         }
 
-        public override void Execute(Mat src, Mat dst)
+        public override void Execute(UMat src, UMat dst)
         {
             var args = new GaussianBlurArgs(this);
             Cv2.GaussianBlur(src, dst, args.Size, 0);
@@ -153,7 +155,7 @@ namespace NumericRecognizer
             return new MedianBlurCommand(this);
         }
 
-        public override void Execute(Mat src, Mat dst)
+        public override void Execute(UMat src, UMat dst)
         {
             var args = new MedianBlurArgs(this);
             Cv2.MedianBlur(src, dst, args.Size);
@@ -211,7 +213,7 @@ namespace NumericRecognizer
             return new BilateralFilterCommand(this);
         }
 
-        public override void Execute(Mat src, Mat dst)
+        public override void Execute(UMat src, UMat dst)
         {
             var args = new BilateralFilterArgs(this);
             Cv2.BilateralFilter(src, dst, args.Size, args.SigmaColor, args.SigmaColor);
@@ -249,7 +251,7 @@ namespace NumericRecognizer
             return new ThresholdCommand(this);
         }
 
-        public override void Execute(Mat src, Mat dst)
+        public override void Execute(UMat src, UMat dst)
         {
             var args = new ThresholdArgs(this);
             Cv2.Threshold(src, dst, args.Threshold, 255, ThresholdTypes.Binary);
@@ -324,7 +326,7 @@ namespace NumericRecognizer
             return new MorphologyExCommand(this);
         }
 
-        public override void Execute(Mat src, Mat dst)
+        public override void Execute(UMat src, UMat dst)
         {
             var args = new MorphologyExArgs(this);
             Cv2.MorphologyEx(src, dst, args.Type, Cv2.GetStructuringElement(MorphShapes.Ellipse, args.Size));
@@ -373,7 +375,7 @@ namespace NumericRecognizer
             return new ScaleAbsCommand(this);
         }
 
-        public override void Execute(Mat src, Mat dst)
+        public override void Execute(UMat src, UMat dst)
         {
             var args = new ScaleAbsArgs(this);
             Cv2.ConvertScaleAbs(src, dst, args.Alpha, args.Beta);
@@ -403,7 +405,7 @@ namespace NumericRecognizer
             return new GrayscaleCommand(this);
         }
 
-        public override void Execute(Mat src, Mat dst)
+        public override void Execute(UMat src, UMat dst)
         {
             var args = new GrayscaleArgs(this);
             Cv2.CvtColor(src, dst, args.Code);
@@ -421,7 +423,7 @@ namespace NumericRecognizer
             return new BitwiseNotCommand(this);
         }
 
-        public override void Execute(Mat src, Mat dst)
+        public override void Execute(UMat src, UMat dst)
         {
             Cv2.BitwiseNot(src, dst);
         }
@@ -460,7 +462,7 @@ namespace NumericRecognizer
             return new RotateCommand(this);
         }
 
-        public override void Execute(Mat src, Mat dst)
+        public override void Execute(UMat src, UMat dst)
         {
             var args = new RotateArgs(this);
             var height = src.Height;
@@ -518,16 +520,16 @@ namespace NumericRecognizer
 
     class MainWindowVM : BindableBase
     {
-        private Bitmap _bitmap;
+        private Mat _mat = new Mat();
         public ImageSource Source
         {
-            get { return _bitmap.ToImageSource(); }
+            get { return _mat.ToWriteableBitmap(); }
         }
 
-        private Bitmap _trimedBitmap;
+        private Mat _trimedMat;
         public ImageSource TrimedSource
         {
-            get { return _trimedBitmap.ToImageSource(); }
+            get { return _trimedMat.ToWriteableBitmap(); }
         }
 
         private int _commandTypeSelectedIndex = 0;
@@ -770,7 +772,7 @@ namespace NumericRecognizer
                     throw new Exception("capture initialization failed");
                 }
 
-                using (var frame = new Mat(capture.FrameHeight, capture.FrameWidth, MatType.CV_8UC3))
+                using (var frame = new UMat(capture.FrameHeight, capture.FrameWidth, MatType.CV_8UC3))
                 {
                     while (true)
                     {
@@ -786,9 +788,9 @@ namespace NumericRecognizer
 
                         PosMsec = (int)capture.Get(VideoCaptureProperties.PosMsec);
                         
-                        Action<Mat> updateSource = (dst) =>
+                        Action<UMat> updateSource = (dst) =>
                         {
-                            _bitmap = BitmapConverter.ToBitmap(dst);
+                            dst.CopyTo(_mat);
                             RaisePropertyChanged("Source");
 
                             if (_imgActualWidth <= 0 || _imgActualHeight <= 0
@@ -814,21 +816,9 @@ namespace NumericRecognizer
                             _scaledRegion.Width = (int)((double)_region.Width * scale);
                             _scaledRegion.Height = (int)((double)_region.Height * scale);
 
-                            using (var dst2 = dst.Clone(new OpenCvSharp.Rect((int)_scaledRegion.Left, (int)_scaledRegion.Top, _scaledRegion.Width, _scaledRegion.Height)))
-                            {
-                                using (MemoryStream ms = new MemoryStream())
-                                {
-                                    var bmp4recog = BitmapConverter.ToBitmap(dst2);
-
-                                    bmp4recog.Save(Path.Combine(outputdir, "img", string.Format("{0}.png", PosMsec.ToString("D8"))));
-
-                                    bmp4recog.Save(ms, ImageFormat.Png);
-                                }
-
-                                _trimedBitmap = BitmapConverter.ToBitmap(dst2);
-
-                                RaisePropertyChanged("TrimedSource");
-                            }
+                            _trimedMat = _mat.Clone(new OpenCvSharp.Rect((int)_scaledRegion.Left, (int)_scaledRegion.Top, _scaledRegion.Width, _scaledRegion.Height));
+                            _trimedMat.ImWrite(Path.Combine(outputdir, "img", string.Format("{0}.png", PosMsec.ToString("D8"))));
+                            RaisePropertyChanged("TrimedSource");
                         };
 
                         var commands = new Queue<CommandBase>();
